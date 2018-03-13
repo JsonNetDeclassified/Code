@@ -1,1 +1,535 @@
-Ch2.txt
+Figure 2-1
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        var class1 = new Class1();
+        class1.Go();
+    }
+}
+
+
+
+
+
+
+
+Figure 2-2
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product() { Name = "Shirt" };
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+
+        var newObj = JsonConvert.DeserializeObject(jsonStr);
+        var typeName = newObj.GetType().Name;
+    }
+}
+
+public class Product
+{
+    public String Name { get; set; }
+}
+
+
+
+
+
+
+
+Figure 2-3
+
+var newObj = (JObject)JsonConvert.DeserializeObject(jsonStr);
+
+
+
+
+
+
+
+Figure 2-4
+
+class Class1
+{
+    public void Go()
+    {
+        var obj = new Product() { Name = "Shirt" };
+        var pArray = new Product[] { obj };
+        var jsonStr = JsonConvert.SerializeObject(pArray);
+
+        var newObj = JsonConvert.DeserializeObject(jsonStr);
+        var typeName = newObj.GetType().Name;
+    }
+}
+
+public class Product
+{
+    public String Name { get; set; }
+}
+
+
+
+
+
+
+
+Figure 2-5
+
+var pList = new List<Product>() { prodObj };
+
+
+
+
+
+
+
+Figure 2-6
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product() { Name = "Shirt" };
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+
+        var newObj =
+                   JsonConvert.DeserializeObject<Product>(jsonStr);
+        var typeName = newObj.GetType().Name;
+    }
+}
+
+public class Product
+{
+    public String Name { get; set; }
+}
+
+
+
+
+
+
+
+Figure 2-7
+
+var newObj = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+
+
+
+
+
+
+Figure 2-8
+
+//this will fail
+var newObj = (Product)JsonConvert.DeserializeObject(jsonStr);
+
+//this will not	
+var newObj = JsonConvert.DeserializeObject<Product>(jsonStr);
+
+
+
+
+
+
+
+Figure 2-9
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+
+    //constructor initializes sizes list
+    public Product()
+    {
+        Sizes = new List<string> { "Small", "Medium" };
+    }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        //sample source JSON
+        var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""Sizes"": [""Large""]
+        }";
+
+        var newObj = 
+                   JsonConvert.DeserializeObject<Product>(jsonStr);
+    }
+}
+
+
+
+
+
+
+
+
+Figure 2-10
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<Book>(jsonStr);
+    var bookName = book.items[0].volumeInfo.title;
+}
+
+
+
+
+
+
+
+Figure 2-11
+
+{
+ "kind": "books#volumes",
+ "totalItems": 1,
+ "items": [
+  {
+   "kind": "books#volume",
+   "id": "LOnpPwAACAAJ",
+   "etag": "E9BpDKSgEMQ",
+   "selfLink": "https://www.googleapis.com/books/v1/volumes/LOnpPwAACAAJ",
+   "volumeInfo": {
+    "title": "The Outsiders",
+    "authors": [
+     "S. E. Hinton"
+    ],
+    "publisher": "Puffin HC",
+    "publishedDate": "2002-06-27",
+    "description": "The Socs's idea of having a good time is beating up Greasers like Ponyboy, the rough, tough, long-haired kids from the other side of town. Ponyboy knows what to expect and knows he can count on his friends - until the night someone goes too far.",
+    "industryIdentifiers": [
+     {
+      "type": "ISBN_10",
+      "identifier": "0141314575"
+     },
+     {
+      "type": "ISBN_13",
+      "identifier": "9780141314570"
+     }
+    ],
+    "readingModes": {
+     "text": false,
+     "image": false
+    },
+    "pageCount": 218,
+    "printType": "BOOK",
+    "categories": [
+     "Alienation (Social psychology)"
+    ],
+    "averageRating": 4.0,
+    "ratingsCount": 302,
+    "maturityRating": "NOT_MATURE",
+    "allowAnonLogging": false,
+    "contentVersion": "preview-1.0.0",
+    "imageLinks": {
+     "smallThumbnail": "http://books.google.com/books/content?id=LOnpPwAACAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+     "thumbnail": "http://books.google.com/books/content?id=LOnpPwAACAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+    },
+    "language": "en",
+    "previewLink": "http://books.google.com/books?id=LOnpPwAACAAJ&dq=isbn:9780141314570&hl=&cd=1&source=gbs_api",
+    "infoLink": "http://books.google.com/books?id=LOnpPwAACAAJ&dq=isbn:9780141314570&hl=&source=gbs_api",
+    "canonicalVolumeLink": "https://books.google.com/books/about/The_Outsiders.html?hl=&id=LOnpPwAACAAJ"
+   },
+   "saleInfo": {
+    "country": "US",
+    "saleability": "NOT_FOR_SALE",
+    "isEbook": false
+   },
+   "accessInfo": {
+    "country": "US",
+    "viewability": "NO_PAGES",
+    "embeddable": false,
+    "publicDomain": false,
+    "textToSpeechPermission": "ALLOWED",
+    "epub": {
+     "isAvailable": false
+    },
+    "pdf": {
+     "isAvailable": false
+    },
+    "webReaderLink": "http://play.google.com/books/reader?id=LOnpPwAACAAJ&hl=&printsec=frontcover&source=gbs_api",
+    "accessViewStatus": "NONE",
+    "quoteSharingAllowed": false
+   },
+   "searchInfo": {
+    "textSnippet": "The Socs&#39;s idea of having a good time is beating up Greasers like Ponyboy, the rough, tough, long-haired kids from the other side of town."
+   }
+  }
+ ]
+}
+
+
+
+
+
+
+
+Figure 2-12
+
+public class Rootobject
+{
+    public string kind { get; set; }
+    public int totalItems { get; set; }
+    public Item[] items { get; set; }
+}
+
+public class Item
+{
+    public string kind { get; set; }
+    public string id { get; set; }
+    public string etag { get; set; }
+    public string selfLink { get; set; }
+    public Volumeinfo volumeInfo { get; set; }
+    public Saleinfo saleInfo { get; set; }
+    public Accessinfo accessInfo { get; set; }
+    public Searchinfo searchInfo { get; set; }
+}
+
+public class Volumeinfo
+{
+    public string title { get; set; }
+    public string[] authors { get; set; }
+    public string publisher { get; set; }
+    public string publishedDate { get; set; }
+    public string description { get; set; }
+    public Industryidentifier[] industryIdentifiers { get; set; }
+    public Readingmodes readingModes { get; set; }
+    public int pageCount { get; set; }
+    public string printType { get; set; }
+    public string[] categories { get; set; }
+    public float averageRating { get; set; }
+    public int ratingsCount { get; set; }
+    public string maturityRating { get; set; }
+    public bool allowAnonLogging { get; set; }
+    public string contentVersion { get; set; }
+    public Imagelinks imageLinks { get; set; }
+    public string language { get; set; }
+    public string previewLink { get; set; }
+    public string infoLink { get; set; }
+    public string canonicalVolumeLink { get; set; }
+}
+
+public class Readingmodes
+{
+    public bool text { get; set; }
+    public bool image { get; set; }
+}
+
+public class Imagelinks
+{
+    public string smallThumbnail { get; set; }
+    public string thumbnail { get; set; }
+}
+
+public class Industryidentifier
+{
+    public string type { get; set; }
+    public string identifier { get; set; }
+}
+
+public class Saleinfo
+{
+    public string country { get; set; }
+    public string saleability { get; set; }
+    public bool isEbook { get; set; }
+}
+
+public class Accessinfo
+{
+    public string country { get; set; }
+    public string viewability { get; set; }
+    public bool embeddable { get; set; }
+    public bool publicDomain { get; set; }
+    public string textToSpeechPermission { get; set; }
+    public Epub epub { get; set; }
+    public Pdf pdf { get; set; }
+    public string webReaderLink { get; set; }
+    public string accessViewStatus { get; set; }
+    public bool quoteSharingAllowed { get; set; }
+}
+
+public class Epub
+{
+    public bool isAvailable { get; set; }
+}
+
+public class Pdf
+{
+    public bool isAvailable { get; set; }
+}
+
+public class Searchinfo
+{
+    public string textSnippet { get; set; }
+}
+
+
+
+
+
+
+
+Figire 2-13
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+
+    //deserialize the JSON to a dynamic object
+    var book = JsonConvert.DeserializeObject<dynamic>(jsonStr);
+    var bookName = book.items[0].volumeInfo.title.ToString();
+}
+
+
+
+
+
+
+
+Figure 2-14
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+
+    //deserialize JSON to an anonymous object of properties needed
+    var Book = new
+    {
+        items = new[] { 
+            new {
+                volumeInfo = new {
+                    title = ""
+                }
+            }
+        }
+    };
+    var book = JsonConvert.DeserializeAnonymousType(jsonStr, Book);
+    var bookName = book.items[0].volumeInfo.title;
+}
+
+
+
+
+
+
+
+Figure 2-15
+
+class Class1
+{
+    public void Go()
+    {
+        var task = GoTask();
+        var prod = task.Result;
+        var productName = prod.Name;
+    }
+
+    public async Task<Product> GoTask()
+    {
+        var prodObj = new Product() { Name = "Shirt" };
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+
+        return await
+            Task.Factory.StartNew(() =>
+            JsonConvert.DeserializeObject<Product>(jsonStr));
+    }
+}
+
+public class Product
+{
+    public String Name { get; set; }
+}
+
+
+
+
+
+
+
+Figure 2-16
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+
+
+
+
+
+
+Figure 2-17
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small" } 
+        };
+
+        var prodUpdateJson = GetProductInfo();
+
+        JsonConvert.PopulateObject(prodUpdateJson, prodObj);
+    }
+
+    private string GetProductInfo()
+    {
+        //simulate JSON returned from API
+        return @"
+        {
+            ""Sizes"": [""Medium"", ""Large""],
+            ""Stock"":5
+        }";
+    }
+}
+
+
+
+
+
+
+
