@@ -1,1 +1,145 @@
-Ch6.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 6
+
+
+
+
+
+
+
+
+
+Figure 6-1
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small", "Medium" },
+            Stock = 5
+        };
+
+        var jsonStr = WriteJson(prodObj);
+    }
+
+    public string WriteJson(Product product)
+    {
+        var sb = new StringBuilder();
+        var sw = new StringWriter(sb);
+        using (var writer = new JsonTextWriter(sw))
+        {
+            writer.Formatting = Formatting.Indented;
+            writer.WriteStartObject();
+
+            // "Name"
+            writer.WritePropertyName("Name");
+            writer.WriteValue(product.Name);
+
+            // "Stock"
+            writer.WritePropertyName("Stock");
+            writer.WriteValue(product.Stock);
+
+            // "Sizes"
+            writer.WritePropertyName("Sizes");
+            writer.WriteStartArray();
+            foreach (string size in product.Sizes)
+            {
+                writer.WriteValue(size);
+            }
+            writer.WriteEndArray();
+
+            writer.WriteEndObject();
+        }
+        return sb.ToString();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 6-2
+
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Small",
+    "Medium"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 6-3
+
+class Class1
+{
+    public void Go()
+    {
+        //sample source JSON
+        var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""Sizes"": [
+            ""Small"",
+            ""Medium""
+            ],
+            ""Stock"": 5
+        }";
+
+        var newObj = ReadJson(jsonStr);
+    }
+
+    public Product ReadJson(string jsonStr)
+    {
+        var prod = new Product(){Sizes = new List<string>()};
+        var reader = new JsonTextReader(new StringReader(jsonStr));
+        while (reader.Read())
+        {
+            if (reader.Value != null)
+            {
+                if (reader.TokenType == JsonToken.PropertyName
+                        && reader.Value.ToString() == "Name")
+                {
+                    reader.Read();
+                    prod.Name = reader.Value.ToString();
+                }
+                else if (reader.TokenType == JsonToken.PropertyName
+                        && reader.Value.ToString() == "Stock")
+                {
+                    reader.Read();
+                    prod.Stock =
+                        Convert.ToInt32(reader.Value.ToString());
+                }
+                else if (reader.TokenType == JsonToken.PropertyName
+                        && reader.Value.ToString() == "Sizes")
+                {
+                    do
+                    {
+                        reader.Read();
+                        if (reader.Value != null)
+                            prod.Sizes.Add(reader.Value.ToString());
+                    } while (reader.TokenType != JsonToken.EndArray);
+                }
+            }
+        }
+        return prod;
+    }
