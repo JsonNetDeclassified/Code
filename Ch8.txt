@@ -1,1 +1,909 @@
-Ch8.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 8
+
+
+
+
+
+
+
+
+
+Figure 8-1
+
+var jval = new JValue(345);
+var jvalValueType = jval.Type; //Integer
+var jvalType = jval.GetType().Name; //JValue
+
+//three ways to get value
+var val1 = jval.ToObject<int>();
+var val2 = (int)jval;
+var val3 = jval.Value; 
+
+
+
+
+
+
+
+
+
+
+Figure 8-2
+
+public void Go()
+{
+    //create JObject with one JProperty
+    var jObj = new JObject(new JProperty("Name", "Shirt"));
+    
+    //add a second JProperty
+    jObj.Add(new JProperty("Stock", 5));
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-3
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //get title looping through JObject
+    foreach (JObject obj in (JArray)book["items"])
+    {
+        foreach (JProperty jProp in (JToken)obj)
+        {
+            if (jProp.Name == "volumeInfo")
+            {
+                JToken jTok = jProp.Value;
+                var title = jTok.Value<string>("title");
+                break;
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-4
+
+foreach (JProperty jProp in obj.Properties())
+{
+    if (jProp.Name == "volumeInfo")
+    {
+        JToken jTok = jProp.Value;
+        var title = jTok.Value<string>("title");
+        break;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-5
+
+JObject obj = JObject.Parse(jsonStr);
+JArray obj = JArray.Parse(jsonStr);
+JToken obj = JToken.Parse(jsonStr);
+
+
+
+
+
+
+
+
+
+
+Figure 8-6
+
+public void Go()
+{
+    Product prod = new Product() { Name = "Shirt" };
+
+    JObject prodObj = JObject.FromObject(prod);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-7
+
+public void Go()
+{
+    JObject prodObj = JObject.FromObject(new
+    {
+        Name = "Shirt",
+        Stock = 5,
+        Sizes = new String[] {"Large", "Medium"}
+    });
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-8
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    var title = (string)book["items"][0]["volumeInfo"]["title"];
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-9
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //get items
+    var items = book["items"].Children();
+    var title = (string)items
+            .Select(p => p["volumeInfo"]["title"]).FirstOrDefault();
+
+    //get volumeInfo via ElementAt()
+    var volInfo = items.First().ElementAt(4);
+    var title2 = 
+            (string)volInfo.Select(p => p["title"]).FirstOrDefault();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-10
+
+var titleJV = book["items"]
+    .Select(p => p["volumeInfo"]["title"]).FirstOrDefault();
+if (titleJV != null)
+{
+    var title3 = titleJV.ToString();
+    //or...
+    var title4 = titleJV.Value<string();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-11
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //get title using path in SelectToken 
+    var title =
+             (string)book.SelectToken("items[0].volumeInfo.title");
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-12
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //title will contain null
+    var title =
+             (string)book.SelectToken("items[5].volumeInfo.title");
+    
+    //setting errorWhenNoMatch to true would throw a JsonException
+    var title2 =
+        (string)book.SelectToken("items[5].volumeInfo.title", true);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-13
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //get title using JSONPath in SelectToken
+    var title1 = (string)book.SelectToken("$..title");
+    var title2 =
+          (string)book.SelectToken("$.items[0].volumeInfo.title");
+    var title3 =
+          (string)book.SelectToken("$.items[-1:].volumeInfo.title");
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-14
+
+public void Go()
+{
+    var jsonStr = string.Empty;
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    //first we make a call to the API
+    using (var client = new HttpClient())
+    {
+        var response = client.GetAsync(url).Result;
+        jsonStr = response.Content.ReadAsStringAsync().Result;
+    }
+    //deserialize the JSON to our Book class
+    var book = JsonConvert.DeserializeObject<JObject>(jsonStr);
+
+    //get title using linq standard query operators
+    var title = book.SelectToken("items").Select(p =>
+              (string)p["volumeInfo"]["title"]).FirstOrDefault();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-15
+
+{
+  "kind": "books#volumes",
+  "totalItems": 95,
+  "items": [
+    {
+      "kind": "books#volume",
+      "id": "y9r_uY0EGmkC",
+      "etag": "ibAcyciXBfk",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/y9r_uY0EGmkC",
+      "volumeInfo": {
+        "title": "That Was Then, This Is Now",
+        "authors": [
+          "S. E. Hinton"
+        ],
+        "publisher": "Penguin",
+        "publishedDate": "2012-05-15",
+        "description": "Another classic from the author of the internationally bestselling The Outsiders Continue celebrating 50 years of The Outsiders by reading this companion novel. That Was Then, This is Now is S. E. Hinton's moving portrait of the bond between best friends Bryon and Mark and the tensions that develop between them as they begin to grow up and grow apart. \"A mature, disciplined novel which excites a response in the reader . . . Hard to forget.\"—The New York Times",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_13",
+            "identifier": "9781101642597"
+          },
+          {
+            "type": "ISBN_10",
+            "identifier": "1101642599"
+          }
+        ],
+        "readingModes": {
+          "text": true,
+          "image": false
+        },
+        "pageCount": 160,
+        "printType": "BOOK",
+        "categories": [
+          "Young Adult Fiction"
+        ],
+        "averageRating": 4.0,
+        "ratingsCount": 39,
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": true,
+        "contentVersion": "1.3.2.0.preview.2",
+        "panelizationSummary": {
+          "containsEpubBubbles": false,
+          "containsImageBubbles": false
+        },
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=y9r_uY0EGmkC&printsec=frontcover&img=1&zoom=5&edge=curl&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=y9r_uY0EGmkC&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api"
+        },
+        "language": "en",
+        "previewLink": "http://books.google.com/books?id=y9r_uY0EGmkC&printsec=frontcover&dq=inauthor:SE+Hinton&hl=&cd=7&source=gbs_api",
+        "infoLink": "https://play.google.com/store/books/details?id=y9r_uY0EGmkC&source=gbs_api",
+        "canonicalVolumeLink": "https://market.android.com/details?id=book-y9r_uY0EGmkC"
+      },
+      "saleInfo": {
+        "country": "US",
+        "saleability": "FOR_SALE",
+        "isEbook": true,
+        "listPrice": {
+          "amount": 9.99,
+          "currencyCode": "USD"
+        },
+        "retailPrice": {
+          "amount": 9.99,
+          "currencyCode": "USD"
+        },
+        "buyLink": "https://play.google.com/store/books/details?id=y9r_uY0EGmkC&rdid=book-y9r_uY0EGmkC&rdot=1&source=gbs_api",
+        "offers": [
+          {
+            "finskyOfferType": 1,
+            "listPrice": {
+              "amountInMicros": 9990000.0,
+              "currencyCode": "USD"
+            },
+            "retailPrice": {
+              "amountInMicros": 9990000.0,
+              "currencyCode": "USD"
+            },
+            "giftable": true
+          }
+        ]
+      },
+      "accessInfo": {
+        "country": "US",
+        "viewability": "PARTIAL",
+        "embeddable": true,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED_FOR_ACCESSIBILITY",
+        "epub": {
+          "isAvailable": true,
+          "acsTokenLink": "http://books.google.com/books/download/That_Was_Then_This_Is_Now-sample-epub.acsm?id=y9r_uY0EGmkC&format=epub&output=acs4_fulfillment_token&dl_type=sample&source=gbs_api"
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=y9r_uY0EGmkC&hl=&printsec=frontcover&source=gbs_api",
+        "accessViewStatus": "SAMPLE",
+        "quoteSharingAllowed": false
+      },
+      "searchInfo": {
+        "textSnippet": "That Was Then, This is Now is S. E. Hinton&#39;s moving portrait of the bond between best friends Bryon and Mark and the tensions that develop between them as they begin to grow up and grow apart."
+      }
+    },
+    {
+      "kind": "books#volume",
+      "id": "VSRQAAAAYAAJ",
+      "etag": "PBgKleJIWo8",
+      "selfLink": "https://www.googleapis.com/books/v1/volumes/VSRQAAAAYAAJ",
+      "volumeInfo": {
+        "title": "The Outsiders",
+        "subtitle": "That was Then, this is Now ; Rumble Fish",
+        "authors": [
+          "S. E. Hinton"
+        ],
+        "publishedDate": "1995",
+        "industryIdentifiers": [
+          {
+            "type": "OTHER",
+            "identifier": "UVA:X004780566"
+          }
+        ],
+        "readingModes": {
+          "text": false,
+          "image": false
+        },
+        "pageCount": 447,
+        "printType": "BOOK",
+        "categories": [
+          "Brothers"
+        ],
+        "maturityRating": "NOT_MATURE",
+        "allowAnonLogging": false,
+        "contentVersion": "0.0.1.0.preview.0",
+        "imageLinks": {
+          "smallThumbnail": "http://books.google.com/books/content?id=VSRQAAAAYAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api",
+          "thumbnail": "http://books.google.com/books/content?id=VSRQAAAAYAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+        },
+        "language": "en",
+        "previewLink": "http://books.google.com/books?id=VSRQAAAAYAAJ&q=inauthor:SE+Hinton&dq=inauthor:SE+Hinton&hl=&cd=10&source=gbs_api",
+        "infoLink": "http://books.google.com/books?id=VSRQAAAAYAAJ&dq=inauthor:SE+Hinton&hl=&source=gbs_api",
+        "canonicalVolumeLink": "https://books.google.com/books/about/The_Outsiders.html?hl=&id=VSRQAAAAYAAJ"
+      },
+      "saleInfo": {
+        "country": "US",
+        "saleability": "NOT_FOR_SALE",
+        "isEbook": false
+      },
+      "accessInfo": {
+        "country": "US",
+        "viewability": "NO_PAGES",
+        "embeddable": false,
+        "publicDomain": false,
+        "textToSpeechPermission": "ALLOWED",
+        "epub": {
+          "isAvailable": false
+        },
+        "pdf": {
+          "isAvailable": false
+        },
+        "webReaderLink": "http://play.google.com/books/reader?id=VSRQAAAAYAAJ&hl=&printsec=frontcover&source=gbs_api",
+        "accessViewStatus": "NONE",
+        "quoteSharingAllowed": false
+      }
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-16
+
+public class Volumeinfo
+{
+    public string title { get; set; }
+    public string[] authors { get; set; }
+    public string publisher { get; set; }
+    public string publishedDate { get; set; }
+    public string description { get; set; }
+    public Industryidentifier[] industryIdentifiers { get; set; }
+    public Readingmodes readingModes { get; set; }
+    public int pageCount { get; set; }
+    public string printType { get; set; }
+    public string[] categories { get; set; }
+    public float averageRating { get; set; }
+    public int ratingsCount { get; set; }
+    public string maturityRating { get; set; }
+    public bool allowAnonLogging { get; set; }
+    public string contentVersion { get; set; }
+    public Imagelinks imageLinks { get; set; }
+    public string language { get; set; }
+    public string previewLink { get; set; }
+    public string infoLink { get; set; }
+    public string canonicalVolumeLink { get; set; }
+}
+
+public class Readingmodes
+{
+    public bool text { get; set; }
+    public bool image { get; set; }
+}
+
+public class Imagelinks
+{
+    public string smallThumbnail { get; set; }
+    public string thumbnail { get; set; }
+}
+
+public class Industryidentifier
+{
+    public string type { get; set; }
+    public string identifier { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-17
+
+public class Class1
+{
+    public void Go()
+    {
+        var jsonStr = string.Empty;
+        var host = "https://www.googleapis.com";
+        var url = host + "/books/v1/volumes?q=inauthor:SE+Hinton";
+
+        //first we make a call to the API
+        using (var client = new HttpClient())
+        {
+            var response = client.GetAsync(url).Result;
+            jsonStr = response.Content.ReadAsStringAsync().Result;
+        }
+
+        //convert the JSON string into a JObject
+        var bookObj = JObject.Parse(jsonStr);
+
+        //extract volumeInfo objects into a list
+        List<JToken> volumeInfoList =
+                 bookObj["items"].Children()["volumeInfo"].ToList();
+
+        //serialize into Volumeinfo objects
+        var volumeList = new List<Volumeinfo>();
+        foreach (JToken volumeInfoToken in volumeInfoList)
+        {
+            //JToken.ToObject will use JsonSerializer internally
+            var volumeInfo = volumeInfoToken.ToObject<Volumeinfo>();
+            volumeList.Add(volumeInfo);
+        }
+
+        //output list of book titles
+        foreach (Volumeinfo vi in volumeList)
+        {
+            Console.WriteLine(vi.title);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-18
+
+Hawkes Harbor
+S.E. Hinton Classic Collection
+The Outsiders
+S. E. Hinton's the Puppy Sister
+Rumble Fish
+Tex
+That Was Then, This Is Now
+Some of Tim's Stories
+Untitled Hinton Book
+The Outsiders
+
+
+
+
+
+
+
+
+
+
+Figure 8-19
+
+public void Go()
+{
+    var prod1 = JObject.Parse(@"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ],
+        ""Price"": 21.99
+    }");
+
+    var prod2 = JObject.Parse(@"{
+        ""Stock"": ""9"",
+        ""Sizes"": [
+            ""Small"",
+            ""Medium"",
+            ""Extra Large""
+        ],
+        ""UPC"": ""123456789"",
+        ""Price"": 19.99
+    }");
+
+    prod1.Merge(prod2, new JsonMergeSettings
+    {
+        MergeArrayHandling = MergeArrayHandling.Concat
+    });
+
+    var jsonStr = prod1.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-20
+
+{
+  "Name": "Shirt",
+  "Stock": "9",
+  "Sizes": [
+    "Large",
+    "Medium",
+    "Small",
+    "Medium",
+    "Extra Large"
+  ],
+  "Price": 19.99,
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-21
+
+prod1.Merge(prod2, new JsonMergeSettings
+{
+    MergeArrayHandling = MergeArrayHandling.Union
+});
+
+
+
+
+
+
+
+
+
+
+
+Figure 8-22
+
+{
+  "Name": "Shirt",
+  "Stock": "9",
+  "Sizes": [
+    "Large",
+    "Medium",
+    "Small",
+    "Extra Large"
+  ],
+  "Price": 19.99,
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 8-23
+
+public void Go()
+{
+    var prod1 = JObject.Parse(@"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large""
+        ],
+        ""Price"": 21.99
+    }");
+
+    var prod2 = JObject.Parse(@"{
+        ""Stock"": ""9"",
+        ""Sizes"": [
+            ""Small"",
+            ""Medium"",
+            ""Extra Large""
+        ],
+        ""UPC"": ""123456789"",
+        ""Price"": 19.99
+    }");
+
+    prod1.Merge(prod2, new JsonMergeSettings
+    {
+        MergeArrayHandling = MergeArrayHandling.Replace
+    });
+
+    var jsonStr = prod1.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-24
+
+{
+  "Name": "Shirt",
+  "Stock": "9",
+  "Sizes": [
+    "Small",
+    "Medium",
+    "Extra Large"
+  ],
+  "Price": 19.99,
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-25
+
+public void Go()
+{
+    var prod1 = JObject.Parse(@"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium"",
+            ""Extra Large""
+        ],
+        ""Price"": 21.99
+    }");
+
+    var prod2 = JObject.Parse(@"{
+        ""Sizes"": [
+            ""Medium"",
+            ""Large""
+        ],
+        ""UPC"": ""123456789""
+    }");
+
+    prod1.Merge(prod2, new JsonMergeSettings
+    {
+        MergeArrayHandling = MergeArrayHandling.Merge
+    });
+
+    var jsonStr = prod1.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 8-26
+
+{
+  "Name": "Shirt",
+  "Stock": "5",
+  "Sizes": [
+    "Medium",
+    "Large",
+    "Extra Large"
+  ],
+  "Price": 21.99,
+  "UPC": "123456789"
+}
