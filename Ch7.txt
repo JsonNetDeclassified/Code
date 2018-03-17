@@ -1,1 +1,183 @@
-Ch7.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 7
+
+
+
+
+
+
+
+
+
+Figure 7-1
+
+public void Go()
+{
+    var mySerializer = new JsonSerializer();
+    mySerializer.Converters.Add(new JavaScriptDateTimeConverter());
+    mySerializer.NullValueHandling = NullValueHandling.Ignore;
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 7-2
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5
+        };
+
+        var serializer = new JsonSerializer();
+        serializer.NullValueHandling = NullValueHandling.Ignore;
+        serializer.Formatting = Formatting.Indented;
+
+        using (var sw = new StreamWriter(@"C:\product.json"))
+        {
+            using (var writer = new JsonTextWriter(sw))
+            {
+                serializer.Serialize(writer, prodObj);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 7-3
+
+{
+  "Name": "Shirt",
+  "Stock": 5
+}
+
+
+
+
+
+
+
+
+
+
+Figure 7-4
+
+public void Go()
+{
+    var serializer = new JsonSerializer();
+    serializer.MissingMemberHandling = MissingMemberHandling.Error;
+
+    using (StreamReader rdr = File.OpenText(@"C:\product.json"))
+    {
+        var prodObj = (Product)serializer.Deserialize(rdr,
+                          typeof(Product));
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 7-5
+
+prodObj:
+Name        = "Shirt"
+Sizes       = null
+Stock       = 5
+
+
+
+
+
+
+
+
+
+
+Figure 7-6
+
+public void Go()
+{
+    var host = "https://www.googleapis.com";
+    var url = host + "/books/v1/volumes?q=isbn:9780141314570";
+    var serializer = new JsonSerializer();
+    serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
+
+    var clientStream = new HttpClient();
+    using (var stream = clientStream.GetStreamAsync(url).Result)
+    {
+        using (var streamReader = new StreamReader(stream))
+        {
+            using (var jsonReader = new JsonTextReader(streamReader))
+            {
+                var book = serializer.Deserialize<Book>(jsonReader);
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 7-7
+
+public void Go()
+{
+    //sample source JSON
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+        ""Sizes"": [
+          ""Small"",
+          ""Medium""
+        ],
+        ""Stock"": 5
+    }";
+
+    var serializer = new JsonSerializer();
+    serializer.MissingMemberHandling = MissingMemberHandling.Ignore;
+
+    using (JsonReader jReader = 
+                      new JsonTextReader(new StringReader(jsonStr)))
+    {
+        var prodObj = serializer.Deserialize<Product>(jReader);
+    }
+}
