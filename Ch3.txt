@@ -1,1 +1,1076 @@
-Ch3.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 3
+
+
+
+
+
+
+
+
+
+
+Figure 3-1
+
+//instantiate an object and set the properties
+var serializerSettings1 = new JsonSerializerSettings();
+serializerSettings1.Formatting = Formatting.Indented;
+serializerSettings1.NullValueHandling = NullValueHandling.Ignore;
+
+//or use the object initializer syntax
+var serializerSettings2 = new JsonSerializerSettings()
+{
+    Formatting = Formatting.Indented,
+    NullValueHandling = NullValueHandling.Ignore
+};
+
+//pass the settings object as method parameter
+var jsonStr = JsonConvert.SerializeObject(prodObj,
+                                                  serializerSettings2);
+
+
+
+
+
+
+
+
+
+Figure 3-2
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" } 
+    };
+
+    var serializerSettings = new JsonSerializerSettings()
+    {
+        Formatting = Formatting.Indented
+    };
+
+    jsonStr = JsonConvert.SerializeObject(prodObj, 
+                      serializerSettings);
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 3-3
+
+{
+  "Name": "Shirt",
+  "Sizes": [
+    "Small"
+  ],
+  "Stock": 0
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-4
+
+jsonStr = JsonConvert.SerializeObject(prodObj, Formatting.Indented);
+
+
+
+
+
+
+
+
+
+
+Figure 3-5
+
+public void Go()
+{
+    var jsonStr = GetProductJson();
+    var newObj = JsonConvert.DeserializeObject<Product>(jsonStr);
+}
+
+private string GetProductJson()
+{
+    //simulate JSON returned from API
+    return @"
+    {
+        ""Name"": ""Shirt"",
+        ""Sizes"": [""Medium"", ""Large""],
+        ""Stock"": null
+    }";
+}
+
+
+
+
+
+
+
+
+
+Figure 3-6
+
+public void Go()
+{
+    var jsonStr = GetProductJson();
+
+    var settings = new JsonSerializerSettings()
+    {
+        NullValueHandling = NullValueHandling.Ignore
+    };
+
+    var newObj = JsonConvert.DeserializeObject<Product>(jsonStr, 
+                 settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-7
+
+public class Class3
+{
+    //WITHOUT MISSING MEMBER HANDLING
+    public void Go()
+    {
+        var jStr = GetProductJson();
+        var newObj = JsonConvert.DeserializeObject<Product>(jStr);
+    }
+
+    private string GetProductJson()
+    {
+        //simulate JSON returned from API
+        return @"
+        {
+            ""Name"": ""Shirt"",
+            ""Sizes"": [""Medium"", ""Large""],
+            ""Stock"": 5,
+            ""UPC"": ""123456789""
+        }";
+    }
+}
+
+//UPC property is missing from the class
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-8
+public void Go()
+{
+    var jsonStr = GetProductJson();
+
+    //WITH MISSING MEMBER HANDLING
+    var settings = new JsonSerializerSettings()
+    {
+        MissingMemberHandling = MissingMemberHandling.Error
+    };
+
+    try
+    {
+        var newObj = JsonConvert.DeserializeObject<Product>(jsonStr,
+                              settings);
+    }
+    catch
+    {
+        //send notification
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-9
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    public DateTime CreateDate { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prod = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small" },
+            CreateDate = DateTime.Parse("12/31/2018 09:22:45")
+        };
+
+        var settings = new JsonSerializerSettings()
+        {
+            DateFormatHandling =
+                      DateFormatHandling.MicrosoftDateFormat
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prod, settings);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-10
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    [DefaultValueAttribute(typeof(DateTime), "12/31/2018 09:22:45")]
+    public DateTime CreateDate { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small" },
+            CreateDate = DateTime.Parse("12/31/2018 09:22:45")
+        };
+
+        var jsonStrBefore = JsonConvert.SerializeObject(prodObj);
+
+        var settings = new JsonSerializerSettings()
+        {
+            DefaultValueHandling = DefaultValueHandling.Ignore
+        };
+
+        var jsonStr = 
+                   JsonConvert.SerializeObject(prodObj, settings);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-11
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    [DefaultValueAttribute(5)]
+    public int Stock { get; set; }
+    [DefaultValueAttribute(typeof(DateTime), "12/31/2018 09:22:45")]
+    public DateTime CreateDate { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodStr = "{\"Name\":\"Shirt\",\"Sizes\":[\"Small\"]}";
+
+        var prodObjBefore =
+                  JsonConvert.DeserializeObject<Product>(prodStr);
+
+        var settings = new JsonSerializerSettings()
+        {
+            DefaultValueHandling = DefaultValueHandling.Populate
+        };
+
+        var prdObj = JsonConvert.DeserializeObject<Product>(prodStr,
+                                      settings);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 3-12
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+
+    //constructor populates sizes list
+    public Product()
+    {
+        Sizes = new List<string> { "Small", "Medium" };
+    }
+}
+public class Class1
+{
+    public void Go()
+    {
+        //sample source JSON
+        var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""Sizes"": [""Large"", ""X-Large""]
+        }";
+
+        var settings = new JsonSerializerSettings()
+        {
+            ObjectCreationHandling = ObjectCreationHandling.Replace
+        };
+
+        var newObj = JsonConvert.DeserializeObject<Product>(jsonStr,
+                                settings);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 3-13
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public Product Recommendations { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-14
+
+public void Go()
+{
+    var prod1 = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" }
+    };
+    var prod2 = new Product()
+    {
+        Name = "Pants",
+        Sizes = new List<string>() { "33" }
+    };
+    prod1.Recommendations = prod2;
+    prod2.Recommendations = prod1;
+
+    var jsonStr = JsonConvert.SerializeObject(prod2, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-15
+
+public void Go()
+{
+    var prod1 = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" }
+    };
+    var prod2 = new Product()
+    {
+        Name = "Pants",
+        Sizes = new List<string>() { "33" }
+    };
+    prod1.Recommendations = prod2;
+    prod2.Recommendations = prod1;
+
+    var settings = new JsonSerializerSettings()
+    {
+        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prod2, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-16
+
+{
+  "Name": "Pants",
+  "Sizes": [
+    "33"
+  ],
+  "Recommendations": {
+    "Name": "Shirt",
+    "Sizes": [
+      "Small"
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-17
+
+public void Go()
+{
+    var prod1 = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" }
+    };
+    var prod2 = new Product()
+    {
+        Name = "Pants",
+        Sizes = new List<string>() { "33" }
+    };
+    prod1.Recommendations = prod2;
+    prod2.Recommendations = prod1;
+
+    var settings = new JsonSerializerSettings()
+    {
+        ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+        PreserveReferencesHandling =
+                                PreserveReferencesHandling.Objects
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prod2, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-18
+
+{
+  "$id": "1",
+  "Name": "Pants",
+  "Sizes": [
+    "33"
+  ],
+  "Recommendations": {
+    "$id": "2",
+    "Name": "Shirt",
+    "Sizes": [
+      "Small"
+    ],
+    "Recommendations": {
+      "$ref": "1"
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-19
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small" }
+        };
+
+        var settings = new JsonSerializerSettings()
+        {
+            TypeNameHandling = TypeNameHandling.All
+        };
+
+        var jsonStr = 
+                    JsonConvert.SerializeObject(prodObj, settings);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-20
+
+{
+  "$type": "JsonNetTest.Product, JsonNetTest",
+  "Name": "Shirt",
+  "Sizes": {
+    "$type": "System.Collections.Generic.List`1[[System.String,
+                   mscorlib]], mscorlib",
+    "$values": [
+      "Small"
+    ]
+  },
+  "Stock": 0
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-21
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" }
+    };
+
+    var settings = new JsonSerializerSettings()
+    {
+        TypeNameHandling = TypeNameHandling.All,
+        TypeNameAssemblyFormat = FormatterAssemblyStyle.Full
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prodObj, settings);
+}
+Figure 3-22
+
+{
+  "$type": "JsonNetTest.Product, JsonNetTest, Version=1.0.0.0,
+        Culture=neutral, PublicKeyToken=null",
+  "Name": "Shirt",
+  "Sizes": {
+    "$type": "System.Collections.Generic.List`1[[System.String,
+         mscorlib, Version=4.0.0.0, Culture=neutral,
+         PublicKeyToken=b77a5c561934e089]], mscorlib, 
+         Version=4.0.0.0, Culture=neutral,
+         PublicKeyToken=b77a5c561934e089",
+    "$values": [
+      "Small"
+    ]
+  },
+  "Stock": 0,
+  "Recommendations": null
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-22
+
+{
+  "$type": "JsonNetTest.Product, JsonNetTest, Version=1.0.0.0,
+        Culture=neutral, PublicKeyToken=null",
+  "Name": "Shirt",
+  "Sizes": {
+    "$type": "System.Collections.Generic.List`1[[System.String,
+         mscorlib, Version=4.0.0.0, Culture=neutral,
+         PublicKeyToken=b77a5c561934e089]], mscorlib, 
+         Version=4.0.0.0, Culture=neutral,
+         PublicKeyToken=b77a5c561934e089",
+    "$values": [
+      "Small"
+    ]
+  },
+  "Stock": 0,
+  "Recommendations": null
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-23
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""$type"": ""JsonNetTest.Product, JsonNetTest"",
+            ""Name"": ""Shirt"",
+            ""Sizes"": {
+               ""$type"": ""System.Collections.Generic.List`1[[
+                               System.String, mscorlib]], mscorlib"",
+               ""$values"": [
+                ""Small""
+               ]
+            },
+            ""Stock"": 0
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.All
+    };
+
+    var obj = JsonConvert.DeserializeObject(jsonStr, settings);
+    var objType = obj.GetType().Name;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-24
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""$type"": ""JsonNetTest.Product, JsonNetTest"",
+            ""Sizes"": {
+                ""$type"": ""System.Collections.Generic.List`1[[
+                               System.String, mscorlib]], mscorlib"",
+                ""$values"": [
+                    ""Small""
+                ]
+            },
+            ""Stock"": 0
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.All
+    };
+
+    var obj = JsonConvert.DeserializeObject(jsonStr, settings);
+    var objType = obj.GetType().Name;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-25
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""$type"": ""JsonNetTest.Product, JsonNetTest"",
+            ""Sizes"": {
+            ""$type"": ""System.Collections.Generic.List`1[[
+            "                 System.String, mscorlib]], mscorlib"",
+            ""$values"": [
+                ""Small""
+            ]
+            },
+            ""Stock"": 0
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.All,
+        MetadataPropertyHandling = MetadataPropertyHandling.ReadAhead
+    };
+
+    var obj = JsonConvert.DeserializeObject(jsonStr, settings);
+    var objType = obj.GetType().Name;
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 3-26
+
+obj:
+    Name        = "Shirt"
+    Sizes       = Count = 1
+    Stock       = 0
+
+
+
+
+
+
+
+
+
+
+Figure 3-27
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small" }
+    };
+
+    var settings = new JsonSerializerSettings()
+    {
+        Converters = new List<JsonConverter>()
+        {
+            new JavaScriptDateTimeConverter() 
+        },
+        ReferenceLoopHandling = ReferenceLoopHandling.Serialize
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prodObj, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-28
+
+public void Go()
+{
+    var traceWriter = new MemoryTraceWriter();
+
+    var settings = new JsonSerializerSettings()
+    {
+        TraceWriter = traceWriter
+    };
+
+    var prod = 
+            JsonConvert.DeserializeObject<Product>(json, settings);
+    var log = traceWriter.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-29
+
+public void Go()
+{
+    var jStr = @"{
+            ""Name"": ""Shirt"",
+            ""Stock"": ""5"",
+            ""Sizes"": [
+                ""Large"",
+                ""Medium""
+            ],
+            ""UPC"": ""123456789""
+        }";
+
+    var errors = new List<string>();
+    var settings = new JsonSerializerSettings
+    {
+        MissingMemberHandling = MissingMemberHandling.Error,
+        Error = delegate (object sender, ErrorEventArgs errorArgs)
+        {
+            errors.Add(errorArgs.ErrorContext.Error.Message);
+            //mark error as handled or exception is thrown
+            errorArgs.ErrorContext.Handled = true;
+        }
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(jStr, settings);
+
+    if (errors.Any())
+        log(String.Join(",", errors.ToArray()));
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-30
+
+Error = (object o, ErrorEventArgs e) =>
+{
+    errors.Add(e.ErrorContext.Error.Message);
+    e.ErrorContext.Handled = true;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-31
+
+public void Go()
+{
+    var jStr = @"{
+            ""Name"": ""Shirt"",
+            ""Stock"": ""5"",
+            ""Sizes"": [
+                ""Large"",
+                ""Medium""
+            ],
+            ""UPC"": ""123456789""
+        }";
+
+    var settings = new JsonSerializerSettings
+    {
+        MissingMemberHandling = MissingMemberHandling.Error,
+        Error = HandleErrors
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(jStr, settings);
+}
+
+private void HandleErrors(object sender, ErrorEventArgs errorArgs)
+{
+    log(errorArgs.ErrorContext.Error.Message);
+    //mark error as handled or exception is thrown
+    errorArgs.ErrorContext.Handled = true;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-32
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+
+    private Product()
+    {
+        Stock = 5;
+        Sizes = new List<string>() { "Small", "Medium" };
+    }
+
+    public Product(string name)
+    {
+        Name = name;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-33
+
+public void Go()
+{
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+    }";
+
+    var prodObj = JsonConvert.DeserializeObject<Product>(jsonStr);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-34
+
+prodObj:
+    Name        = "Shirt"
+    Sizes       = null
+    Stock       = 0
+
+
+
+
+
+
+
+
+
+
+Figure 3-35
+
+public void Go()
+{
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        ConstructorHandling =
+                 ConstructorHandling.AllowNonPublicDefaultConstructor
+    };
+
+    var prodObj = 
+           JsonConvert.DeserializeObject<Product>(jsonStr, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 3-36
+
+prodObj:
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
