@@ -1,1 +1,1138 @@
-Ch12.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 12
+
+
+
+
+
+
+
+
+
+Figure 12-1
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""Stock"": ""5"",
+            ""Sizes"": [
+                ""Large"",
+                ""Medium""
+            ],
+            ""UPC"": ""123456789"",
+            ""Price"": 19.99
+        }";
+
+    var traceWriter = new MemoryTraceWriter();
+
+    var settings = new JsonSerializerSettings()
+    {
+        TraceWriter = traceWriter
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(json, settings); 
+
+    var log = traceWriter.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-2
+
+2018-01-29T16:18:52.235 Info Started deserializing 
+    ConsoleTestApp.Product. Path 'Name', line 2, position 27.
+2018-01-29T16:18:52.265 Info Started deserializing System.
+    Collections.Generic.List`1[System.String]. Path 'Sizes', 
+    line 4, position 30.
+2018-01-29T16:18:52.267 Info Finished deserializing System.
+    Collections.Generic.List`1[System.String]. Path 'Sizes', 
+    line 7, position 21.
+2018-01-29T16:18:52.268 Verbose Could not find member 
+    'UPC' on ConsoleTestApp.Product. Path 'UPC', line 8, position 26.
+2018-01-29T16:18:52.269 Info Finished deserializing 
+     ConsoleTestApp.Product. Path '', line 9, position 17.
+2018-01-29T16:18:52.269 Verbose Deserialized JSON:
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Large",
+    "Medium"
+  ],
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-3
+
+public class TraceWriter : ITraceWriter
+{
+    public TraceLevel LevelFilter
+    {
+        get
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public void Trace(TraceLevel level, string message, Exception ex)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 12-4
+
+public class NLogTraceWriter : ITraceWriter
+{
+    private static readonly Logger Logger =
+                             LogManager.GetLogger("NLogTraceWriter");
+
+    public TraceLevel LevelFilter
+    {
+        // trace all messages. nlog can handle filtering
+        get { return TraceLevel.Verbose; }
+    }
+
+    public void Trace(TraceLevel level, string message, Exception ex)
+    {
+        // log Json.NET message to NLog
+        Logger.Log(ConvertToNlogLevel(level), message);
+    }
+
+    private LogLevel ConvertToNlogLevel(TraceLevel level)
+    {
+        switch (level)
+        {
+            case TraceLevel.Error:
+                return LogLevel.Error;
+            case TraceLevel.Warning:
+                return LogLevel.Warn;
+            case TraceLevel.Info:
+                return LogLevel.Info;
+            case TraceLevel.Off:
+                return LogLevel.Off;
+            default:
+                return LogLevel.Trace;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-5
+
+public void Go()
+{
+    var json = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ],
+        ""UPC"": ""123456789""
+    }";
+
+    var nlogTraceWriter = new NLogTraceWriter();
+
+    var settings = new JsonSerializerSettings()
+    {
+        TraceWriter = nlogTraceWriter
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(json, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-6
+
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <configSections>
+    <section name="nlog"
+                    type="NLog.Config.ConfigSectionHandler, NLog"/>
+  </configSections>
+  <startup>
+    <supportedRuntime version="v4.0"
+                                  sku=".NETFramework,Version=v4.5"/>
+  </startup>
+  <nlog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <targets>
+      <target name="logfile" xsi:type="File"
+          fileName="${basedir}/${date:format=yyyy-MM-dd}-file.log" />
+    </targets>
+    <rules>
+      <logger name="*" minlevel="Trace" writeTo="logfile" />
+    </rules>
+  </nlog>
+</configuration>
+
+
+
+
+
+
+
+
+
+
+Figure 12-7
+
+2018-01-30 11:14:53.8772|INFO|NLogTraceWriter|Started deserializing
+  ConsoleTestApp.Product. Path 'Name', line 2, position 27.
+2018-01-30 11:14:53.9172|INFO|NLogTraceWriter|Started deserializing 
+  System.Collections.Generic.List`1[System.String]. Path 'Sizes', 
+  line 4, position 30.
+2018-01-30 11:14:53.9172|INFO|NLogTraceWriter|Finished deserializing 
+  System.Collections.Generic.List`1[System.String]. Path 'Sizes', 
+  line 7, position 21.
+2018-01-30 11:14:53.9172|TRACE|NLogTraceWriter| Could 
+  not find member 'UPC' on ConsoleTestApp.Product. Path 'UPC', 
+  line 8, position 26.
+2018-01-30 11:14:53.9172|INFO|NLogTraceWriter|
+  Finished deserializing ConsoleTestApp.Product. Path '', 
+  line 9, position 17.
+2018-01-30 11:14:53.9172|TRACE|NLogTraceWriter|Deserialized JSON: 
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Large",
+    "Medium"
+  ],
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-8
+
+public class NLogTraceWriter : ITraceWriter
+{
+    private static readonly Logger Logger =
+                             LogManager.GetLogger("NLogTraceWriter");
+
+    public TraceLevel LevelFilter
+    {
+        // trace all messages. nlog can handle filtering
+        get { return TraceLevel.Verbose; }
+    }
+
+    public NLogTraceWriter()
+    {
+        //define file
+        var fileTarget = new FileTarget();
+        fileTarget.FileName =
+                    "${basedir}/${date:format=yyyy-MM-dd}-file.log";
+        //define logging rules
+        var loggingRule = new LoggingRule("*", LogLevel.Trace,
+                                                   fileTarget);
+        //add rules and targets to configuration
+        var config = new LoggingConfiguration();
+        config.AddTarget("file", fileTarget);
+        config.LoggingRules.Add(loggingRule);
+        LogManager.Configuration = config;
+    }
+
+    public void Trace(TraceLevel level, string message, Exception ex)
+    {
+        // log Json.NET message to NLog
+        Logger.Log(ConvertToNlogLevel(level), message);
+    }
+
+    private LogLevel ConvertToNlogLevel(TraceLevel level)
+    {
+        switch (level)
+        {
+            case TraceLevel.Error:
+                return LogLevel.Error;
+            case TraceLevel.Warning:
+                return LogLevel.Warn;
+            case TraceLevel.Info:
+                return LogLevel.Info;
+            case TraceLevel.Off:
+                return LogLevel.Off;
+            default:
+                return LogLevel.Trace;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-9
+
+public void Go()
+{
+    var json = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ],
+        ""UPC"": ""123456789""
+    }";
+
+    var nlogTraceWriter = new NLogTraceWriter();
+
+    var settings = new JsonSerializerSettings()
+    {
+        TraceWriter = nlogTraceWriter,
+        MissingMemberHandling = MissingMemberHandling.Error
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(json, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-10
+
+2018-01-30 14:51:52.1851|INFO|NLogTraceWriter|Started deserializing
+  ConsoleTestApp.Product. Path 'Name', line 2, position 27.
+2018-01-30 14:51:52.2231|INFO|NLogTraceWriter|Started 
+  deserializing System.Collections.Generic.List`1[System.String]. 
+  Path 'Sizes', line 4, position 30.
+2018-01-30 14:51:52.2271|INFO|NLogTraceWriter|Finished 
+  deserializing System.Collections.Generic.List`1[System.String]. 
+  Path 'Sizes', line 7, position 21.
+2018-01-30 14:51:52.2271|TRACE|NLogTraceWriter|Could not find member 
+  'UPC' on ConsoleTestApp.Product. Path 'UPC', line 8, position 26.
+2018-01-30 14:51:52.2271|ERROR|NLogTraceWriter|Error deserializing
+  ConsoleTestApp.Product. Could not find member 'UPC' on object of 
+  type 'Product'. Path 'UPC', line 8, position 26.
+
+
+
+
+
+
+
+
+
+
+Figure 12-11
+
+<system.diagnostics>
+  <trace autoflush="true">
+    <listeners>
+      <add name="myListener"
+                type="System.Diagnostics.TextWriterTraceListener"
+                initializeData="TextWriterTraceOutput.log” />
+      <remove name="Default" />
+    </listeners>
+  </trace>
+</system.diagnostics>
+
+
+
+
+
+
+
+
+
+
+Figure 12-12
+
+public void Go()
+{
+    var jStr = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ],
+        ""UPC"": ""123456789""
+    }";
+
+    var diagsTraceWriter = new DiagnosticsTraceWriter();
+    diagsTraceWriter.LevelFilter = TraceLevel.Verbose;
+
+    var settings = new JsonSerializerSettings
+    {
+        TraceWriter = diagsTraceWriter
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(jStr, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-13
+
+Newtonsoft.Json Information: 0 : Started deserializing
+   ConsoleTestApp.Product. Path 'Name', line 2, position 23.
+Newtonsoft.Json Information: 0 : Started deserializing
+   System.Collections.Generic.List`1[System.String]. Path 'Sizes', 
+   line 4, position 26.
+Newtonsoft.Json Information: 0 : Finished deserializing
+   System.Collections.Generic.List`1[System.String]. Path 'Sizes', 
+   line 7, position 17.
+Newtonsoft.Json Verbose: 0 : Could not find member 'UPC' on
+   ConsoleTestApp.Product. Path 'UPC', line 8, position 22.
+Newtonsoft.Json Information: 0 : Finished deserializing
+   ConsoleTestApp.Product. Path '', line 9, position 13.
+Newtonsoft.Json Verbose: 0 : Deserialized JSON: 
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Large",
+    "Medium"
+  ],
+  "UPC": "123456789"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-14
+
+public void Go()
+{
+    Trace.Listeners.Clear(); //delete Default listener
+    var textTraceListener = new TextWriterTraceListener(
+                         "TextWriterTraceOutput.log", "myListener");
+    Trace.Listeners.Add(textTraceListener);
+    Trace.AutoFlush = true;
+
+    var jStr = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ],
+        ""UPC"": ""123456789""
+    }";
+
+    var diagsTraceWriter = new DiagnosticsTraceWriter();
+    diagsTraceWriter.LevelFilter = TraceLevel.Verbose;
+
+    var settings = new JsonSerializerSettings
+    {
+        TraceWriter = diagsTraceWriter
+    };
+
+    var prod = 
+              JsonConvert.DeserializeObject<Product>(jStr, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-15
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+
+    
+    [OnSerializing]
+    internal void CapitalizePropertyValue(StreamingContext context)
+    {
+        //capitalize values
+        if (!String.IsNullOrEmpty(Name) && char.IsLower(Name[0]))
+            Name = char.ToUpper(Name[0]) + Name.Substring(1);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-16
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "shirt",
+        Stock = -5,
+        Sizes = new List<string>() { "Small" }
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prodObj);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-17
+
+prodObj:
+    Name        = "Shirt"
+    Stock       = -5
+Sizes       = Count = 1
+
+
+
+
+
+
+
+
+
+
+Figure 12-18
+
+{
+  "Name": "Shirt",
+  "Stock": -5,
+  "Sizes": [
+    "Small"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-19
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+    public DateTime Processed { get; set; }
+
+    [OnSerialized]
+    internal void SetProcessedTime(StreamingContext context)
+    {
+        Processed = DateTime.Now;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 12-20
+
+prodObj:
+    Name        = "Shirt"
+    Processed  = {1/8/2018 1:08:52 PM}
+    Sizes       = Count = 1
+    Stock       = -5
+
+
+
+
+
+
+
+
+
+
+Figure 12-21
+
+{
+  "Name": "shirt",
+  "Stock": -5,
+  "Sizes": [
+    "Small"
+  ],
+  "Processed": "0001-01-01T00:00:00"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-22
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+    public bool InStock { get; set; }
+
+    [OnDeserialized]
+    internal void SetInStock(StreamingContext context)
+    {
+        if (Stock > 0)
+            InStock = true;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-23
+
+public void Go()
+{
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ]
+    }";
+
+    var newProdObj = JsonConvert.DeserializeObject<Product>(jsonStr);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-24
+
+newProdObj:
+    InStock    = true
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
+
+
+
+
+
+
+
+
+
+
+Figure 12-25
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+    public bool InStock { get; set; }
+    [JsonIgnore]
+    public string VendorName { get; set; }
+
+    [OnDeserializing]
+    internal void SetVendorName(StreamingContext context)
+    {
+        VendorName = "My Store";
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-26
+
+public void Go()
+{
+    var acmeJson = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+                ""Large"",
+                ""Medium""
+            ],
+        ""VendorName"": ""ACME Apparel Company""
+    }";
+
+    var newProdObj = 
+                     JsonConvert.DeserializeObject<Product>(acmeJson);
+    UpdateDatabase(newProdObj);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-27
+
+newProdObj:
+    InStock    = true
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
+    VendorName   = "My Store"
+
+
+
+
+
+
+
+
+
+
+Figure 12-28
+
+public class AllowSerializeContractResolver : DefaultContractResolver
+{
+    protected override JsonProperty CreateProperty(MemberInfo member,
+                        MemberSerialization memberSerialization)
+    {
+        var jsonProperty = 
+                    base.CreateProperty(member, memberSerialization);
+        jsonProperty.ShouldSerialize = x =>
+        {
+            if (jsonProperty.PropertyType.Name.Equals("Int32"))
+                return true;
+            else
+                return false;
+        };
+        return jsonProperty;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-29
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-30    
+
+public void Go()
+{
+    Product product = new Product
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small", "Medium", "Large" },
+        Stock = 5
+    };
+
+    var settings = new JsonSerializerSettings()
+    {
+        ContractResolver = new AllowSerializeContractResolver()
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(product, settings);
+}    
+
+
+
+
+
+
+
+
+
+
+Figure 12-31
+
+{
+  "Stock": 5
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-32
+
+{
+  "$type": "JsonNetTest.Product, JsonNetTest",
+  "Name": "Shirt",
+  "Sizes": {
+    "$type": "System.Collections.Generic.List`1[[System.String,
+                                            mscorlib]], mscorlib",
+    "$values": [
+      "Small"
+    ]
+  },
+  "Stock": 0
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-33
+
+public void Go()
+{
+    var jsonStr = @"{
+        ""$type"": ""JsonNetTest.Product, JsonNetTest"",
+        ""Name"": ""Shirt"",
+        ""Sizes"": {
+            ""$type"": 
+                 ""System.Collections.Generic.List`1[[System.String, 
+                 mscorlib]], mscorlib"",
+            ""$values"": [
+                    ""Small""
+            ]
+        },
+        ""Stock"": 0,
+        ""Recommendations"": null
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.Objects
+    };
+
+    var prodObj = JsonConvert.DeserializeObject<Product>(jsonStr,
+                        settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-34
+
+public class MyBinder : ISerializationBinder
+{
+    //called during deserialization
+    public Type BindToType(string assemblyName, string typeName)
+    {
+        throw new NotImplementedException();
+    }
+
+    //called during serialization
+    public void BindToName(Type serializedType, 
+            out string assemblyName, out string typeName)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-35
+
+public class MyNameBinder : ISerializationBinder
+{
+    //called during deserialization
+    public Type BindToType(string assemblyName, string typeName)
+    {
+        throw new NotImplementedException();
+    }
+
+    //called during serialization
+    public void BindToName(Type serializedType, 
+           out string assemblyName, out string typeName)
+    {
+        assemblyName = null;
+        typeName = serializedType.Name;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-36
+
+public void Go()
+{
+    var product = new Product
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Small", "Medium", "Large" },
+        Stock = 5
+    };
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.Objects,
+        SerializationBinder = new MyNameBinder()
+    };
+
+    //calls BindToName
+    var json = JsonConvert.SerializeObject(product, settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-37
+{
+  "$type": "Product",
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Small",
+    "Medium",
+    "Large"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-38
+
+public class MyTypeBinder : ISerializationBinder
+{
+    //called during deserialization
+    public Type BindToType(string assemblyName, string typeName)
+    {
+        var type = Type.GetType(typeName);
+        if (type != null)
+            return type;
+        var ns = this.GetType().Namespace;
+        var tn = typeName.Split('.')[1];
+        return Type.GetType($"{ns}.{tn}");
+    }
+
+    //called during serialization
+    public void BindToName(Type serializedType, 
+                out string assemblyName, out string typeName)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-39
+
+public void Go()
+{
+    var jsonStr = @"{
+        ""$type"": ""JsonNetTest.Product, JsonNetTest"",
+        ""Name"": ""Shirt"",
+        ""Sizes"": {
+            ""$type"": 
+                 ""System.Collections.Generic.List`1[[System.String, 
+                   mscorlib]], mscorlib"",
+            ""$values"": [
+                ""Small""
+            ]
+        },
+        ""Stock"": 0,
+        ""Recommendations"": null
+    }";
+
+    var settings = new JsonSerializerSettings
+    {
+        TypeNameHandling = TypeNameHandling.Objects,
+        SerializationBinder = new MyTypeBinder()
+    };
+
+    //calls BindToType
+    var prodObj = JsonConvert.DeserializeObject<Product>(jsonStr,
+                              settings);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 12-40
+
+prodObj:
+    Name        = "Shirt"
+    Sizes       = Count = 1
+    Stock       = 0
