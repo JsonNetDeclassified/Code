@@ -1,1 +1,615 @@
-Ch9.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 9
+
+
+
+
+
+
+
+
+
+Figure 9-1
+
+class Class1
+{
+    public void Go()
+    {
+        var jSchemaGenerator = new JSchemaGenerator();
+        var schema = jSchemaGenerator.Generate(typeof(Product));
+        var schemaJson = schema.ToString();
+    }
+}
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-2
+
+{
+  "type": "object",
+  "properties": {
+    "Name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Stock": {
+      "type": "integer"
+    },
+    "Sizes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  },
+  "required": [
+    "Name",
+    "Stock",
+    "Sizes"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-3
+
+[DisplayName("Apparel Products")]
+[Description("Products from the Apparel category")]
+public class Product
+{
+    public string Name { get; set; }
+    [DisplayName("Stock level")]
+    [Description("number of items in inventory")]
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-4
+
+{
+  "title": "Apparel Products",
+  "description": "Products from the Apparel category",
+  "type": "object",
+  "properties": {
+    "Name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Stock": {
+      "title": "Stock level",
+      "description": "number of items in inventory",
+      "type": "integer"
+    },
+    "Sizes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  },
+  "required": [
+    "Name",
+    "Stock",
+    "Sizes"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-5
+
+class Class1
+{
+    public void Go()
+    {
+        var jSchemaGenerator = new JSchemaGenerator();
+        jSchemaGenerator.ContractResolver = 
+                       new CamelCasePropertyNamesContractResolver();
+        var schema = jSchemaGenerator.Generate(typeof(Product));
+        var schemaJson = schema.ToString();
+    }
+}
+
+public class Product
+{
+    public string ProductName { get; set; }
+    public int StockLevel { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-6
+
+{
+  "type": "object",
+  "properties": {
+    "productName": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "stockLevel": {
+      "type": "integer"
+    },
+    "sizes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  },
+  "required": [
+    "productName",
+    "stockLevel",
+    "sizes"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-7
+
+public void Go()
+{
+    var productSchemaStr = @"{
+        ""type"": ""object"",
+        ""properties"": {
+        ""Name"": {
+            ""type"": ""string""
+        },
+        ""Stock"": {
+            ""type"": ""integer""
+        },
+        ""Sizes"": {
+            ""type"": ""array"",
+            ""items"": {
+            ""type"": ""string""
+            }
+        }
+        }
+    }";
+
+    var productSchema = JSchema.Parse(productSchemaStr);
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-8
+
+public void Go()
+{
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties = {
+		  { "Name", new JSchema { Type = JSchemaType.String } },
+		  { "Stock", new JSchema { Type = JSchemaType.Integer } },
+		  { "Sizes", new JSchema { Type = JSchemaType.Array, 
+			      Items = 
+                      {
+                         new JSchema { Type = JSchemaType.String }
+                      }
+			  }
+		  }
+        }
+    };
+
+    var schemaJson = productSchema.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-9
+
+{
+  "type": "object",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "Stock": {
+      "type": "integer"
+    },
+    "Sizes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 9-10
+
+public void Go()
+{
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties =  {
+		  { "Name", new JSchema { Type = JSchemaType.String } },
+		  { "Stock", new JSchema { Type = JSchemaType.Number} },
+		  { "Sizes", new JSchema{
+			      Type = JSchemaType.Array,
+			      Items = { 
+			          new JSchema { Type = JSchemaType.String } 
+			      }
+			  }
+		  }
+        }
+    };
+    //add required properties
+    productSchema.Required.Add("Name");
+    productSchema.Required.Add("Stock");
+    productSchema.Required.Add("Sizes");
+
+    var schemaJson = productSchema.ToString();
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-11
+
+{
+  "type": "object",
+  "properties": {
+    "Name": {
+      "type": "string"
+    },
+    "Stock": {
+      "type": "number"
+    },
+    "Sizes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "Name",
+    "Stock",
+    "Sizes"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-12
+
+public void Go()
+{
+    //manually generate the schema
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties = {
+		  { "Name", new JSchema { Type = JSchemaType.String } },
+		  { "Stock", new JSchema { Type = JSchemaType.Integer } },
+		  { "Sizes", new JSchema{
+			      Type = JSchemaType.Array,
+			      Items = { 
+			          new JSchema { Type = JSchemaType.String } 
+			      }
+			  }
+		  }
+        }
+    };
+    
+    //add required properties
+    productSchema.Required.Add("Name");
+    productSchema.Required.Add("Stock");
+    productSchema.Required.Add("Sizes");
+
+    //create JObject from source JSON
+    var prodJObj = JObject.Parse(@"
+    {
+        ""Name"": ""Shirt"",
+        ""Sizes"": [""Medium"", ""Large""],
+        ""Stock"": 5,
+        ""UPC"": ""123456789""
+    }");
+
+    //validate against schema
+    bool isValid = prodJObj.IsValid(productSchema);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-13
+
+public void Go()
+{
+    //manually generate the schema
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties = {
+		  { "Name", new JSchema { Type = JSchemaType.String } },
+		  { "Stock", new JSchema { Type = JSchemaType.Integer } },
+		  { "Sizes", new JSchema{
+			      Type = JSchemaType.Array,
+			      Items = { 
+			          new JSchema { Type = JSchemaType.String } 
+			      }
+			  }
+		  }
+        }
+    };
+
+    //add required properties
+    productSchema.Required.Add("Name");
+    productSchema.Required.Add("Stock");
+    productSchema.Required.Add("Sizes");
+
+    //create JObject from source JSON
+    var prodJObj = JObject.Parse(@"
+    {
+        ""Name"": ""Shirt"",
+        ""Sizes"": [""Medium"", ""Large""],
+        ""UPC"": ""123456789""
+    }");
+
+    //validate against schema
+    IList<string> errorsList;
+    bool isValid = prodJObj.IsValid(productSchema, out errorsList);
+    var errorMessages = String.Join(";", errorsList.ToArray());
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-14
+
+public void Go()
+{
+    //manually generate the schema
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties = {
+		  { "Name", new JSchema { Type = JSchemaType.String } },
+		  { "Stock", new JSchema { Type = JSchemaType.Integer } },
+		  { "Sizes", new JSchema { Type = JSchemaType.Array,
+			      Items = 
+			      {
+			          new JSchema { Type = JSchemaType.String }
+			      }
+			  }
+		  }
+        }
+    };
+
+    //add required properties
+    productSchema.Required.Add("Name");
+    productSchema.Required.Add("Stock");
+    productSchema.Required.Add("Sizes");
+
+    //JSON string
+    var prodJson = @"
+    {
+        ""Name"": ""Shirt"",
+        ""Sizes"": [""Medium"", ""Large""],
+        ""UPC"": ""123456789""
+    }";
+
+    //declare JSchemaValidatingReader
+    var reader = new JsonTextReader(new StringReader(prodJson));
+    var validatingReader = new JSchemaValidatingReader(reader);
+    validatingReader.Schema = productSchema;
+
+    //declare list to catch any error messages
+    IList<string> errorsList = new List<string>();
+    validatingReader.ValidationEventHandler +=
+			          (o, a) => errorsList.Add(a.Message);
+
+    //validate
+    var serializer = new JsonSerializer();
+    var product = serializer.Deserialize<Product>(validatingReader);
+
+    //get error messages
+    var errorMessages = String.Join(";", errorsList.ToArray());
+}
+
+
+
+
+
+
+
+
+
+
+Figure 9-15
+
+public void Go()
+{
+    //manually generate the schema
+    var productSchema = new JSchema
+    {
+        Type = JSchemaType.Object,
+        Properties =    {
+            { "Name", new JSchema { Type = JSchemaType.String } },
+            { "Stock", new JSchema {
+                    Type = JSchemaType.Integer,
+                    ExclusiveMinimum = true,
+                    Minimum = 10
+                }
+            },
+            { "Sizes", new JSchema{
+                    Type = JSchemaType.Array,
+                    Items = { 
+			            new JSchema { Type = JSchemaType.String } 
+			        }
+                }
+            }
+        }
+    };
+
+    //create Product object
+    var product = new Product
+    {
+        Name = "Shirt",
+        Sizes = new List<string>
+        {
+            "Large", "Medium"
+        },
+        Stock = 5
+    };
+
+    using (var stringWriter = new StringWriter())
+    {
+        var writer = new JsonTextWriter(stringWriter);
+        writer.Formatting = Formatting.Indented;
+
+        var validatingWriter = new JSchemaValidatingWriter(writer);
+        validatingWriter.Schema = productSchema;
+
+        IList<string> errorsList = new List<string>();
+        validatingWriter.ValidationEventHandler +=
+                           (o, a) => errorsList.Add(a.Message);
+
+        var serializer = new JsonSerializer();
+        serializer.Serialize(validatingWriter, product);
+
+        //output
+        var isValid = (errorsList.Count == 0);
+        var errorMessages = String.Join(";", errorsList.ToArray());
+        var prodJson = stringWriter.ToString();
+    }
+}
