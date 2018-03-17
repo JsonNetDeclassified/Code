@@ -1,1 +1,676 @@
-Ch5.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 5
+
+
+
+
+
+
+
+
+
+Figure 5-1
+
+public class MyConverter : JsonConverter
+{
+    public override bool CanConvert(Type objectType)
+    {
+        return false;
+    }
+
+public override void WriteJson(JsonWriter writer, 
+object value, JsonSerializer serializer)
+    {
+        throw new NotImplementedException();
+    }
+
+public override object ReadJson(JsonReader reader, 
+    Type objectType, object existingValue,
+    JsonSerializer serializer)
+    {
+        return null;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+Figure 5-2
+
+[JsonConverter(typeof(MyConverter))]
+public List<String> Sizes { get; set; }
+
+
+
+
+
+
+
+
+
+
+Figure 5-3
+
+public class MyConverter : JsonConverter
+{
+    public override bool CanWrite { get { return false; } }
+
+    
+    //not called when invoked by attribute
+    public override bool CanConvert(Type objectType)
+    {
+        return (objectType == typeof(MyConverter));
+    }
+
+public override void WriteJson(JsonWriter writer,
+object value, JsonSerializer serializer)
+    {
+        throw new NotImplementedException();
+    }
+
+public override object ReadJson(JsonReader reader, 
+     Type objectType, object existingValue, 
+     JsonSerializer serializer)
+    {
+        if (reader.TokenType == JsonToken.StartArray)
+        {
+            //all good, send back what came
+            return serializer.Deserialize(reader, objectType);
+        }
+        else
+        {
+            var jObj = JObject.Load(reader);
+            //if unexpected results, just send back what came
+            if (jObj == null || jObj.Count == 0 || !jObj.HasValues)
+                return serializer.Deserialize(reader, objectType);
+
+            //we know the object can be deserialized to Product class
+            var product = jObj.ToObject<Product>();
+            return new List<Product>() { product };
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-4
+
+public override void WriteJson(JsonWriter writer, object value,
+JsonSerializer serializer)
+{
+    //do normal serialization
+    var token = JToken.FromObject(value);
+    token.WriteTo(writer);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-5
+
+public class ProductsList
+{
+    [JsonConverter(typeof(MyConverter))]
+    public List<Product> Products { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-6
+
+public class Class1
+{
+    public void Go()
+    {
+        //simulate JSON source
+        var jsonStr = SimulateProductsArrayJson();
+
+        var newObj =
+               JsonConvert.DeserializeObject<ProductsList>(jsonStr);
+    }
+
+    private string SimulateProductsArrayJson()
+    {
+        //simulate JSON for array of 2 products
+        return @"
+        {
+            ""Products"": 
+            [
+                {
+                    ""Name"": ""Shirt"",
+                    ""Sizes"": [""Medium"", ""Large""]
+                },
+                {
+                    ""Name"": ""Pants"",
+                    ""Sizes"": [""31"", ""33""]
+                }
+            ]
+        }";
+    }
+
+    private string SimulateProductObjectJson()
+    {
+        //simulate JSON for 1 product
+        return @"
+        {
+            ""Products"": 
+                {
+                    ""Name"": ""Shirt"",
+                    ""Sizes"": [""Medium"", ""Large""]
+                }
+        }";
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-7
+
+//Products as an array
+{
+  "Products": [
+    {
+      "Name": "Shirt",
+      "Sizes": [
+        "Medium",
+        "Large"
+      ]
+    },
+    {
+      "Name": "Pants",
+      "Sizes": [
+        "31",
+        "33"
+      ]
+    }
+  ]
+}
+
+//Products as an object
+{
+  "Products": {
+    "Name": "Shirt",
+    "Sizes": [
+      "Medium",
+      "Large"
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-8
+
+newObj:
+Products:
+[0]:
+    		Name        = "Shirt"
+    		Sizes       = Count 2
+    		Stock       = 0
+[1]:
+    		Name        = "Pants"
+    		Sizes       = Count 2
+    		Stock       = 0
+
+
+
+
+
+
+
+
+
+
+Figure 5-9
+
+public void Go()
+{
+    //simulate JSON source
+    var jsonStr = SimulateProductObjectJson();
+
+    var newObj =
+               JsonConvert.DeserializeObject<ProductsList>(jsonStr);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-10
+
+newObj:
+Products:
+[0]:
+    		Name        = "Shirt"
+    		Sizes       = Count 2
+    		Stock       = 0
+
+
+
+
+
+
+
+
+
+
+Figure 5-11
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    public DateTime CreateDate { get; set; }
+    public DateTime ModifyDate { get; set; }
+    public DateTime RetireDate { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-12
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5,
+            Sizes = new List<string>() { "Small" },
+            CreateDate = new DateTime(2012, 1, 18, 17, 22, 35, 
+                           DateTimeKind.Utc),
+            RetireDate = new DateTime(2015, 12, 21, 11, 59, 59, 
+                           DateTimeKind.Utc),
+            ModifyDate = new DateTime(2013, 7, 22, 9, 43, 12, 
+                           DateTimeKind.Utc)
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-13 - ISO 8601 Date Format
+
+{
+  "Name": "Shirt",
+  "Sizes": [
+    "Small"
+  ],
+  "Stock": 5,
+  "CreateDate": "2012-01-18T17:22:35Z",
+  "ModifyDate": "2013-07-22T09:43:12Z",
+  "RetireDate": "2015-12-21T11:59:59Z"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-14
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "Shirt",
+        Stock = 5,
+        Sizes = new List<string>() { "Small" },
+        CreateDate = new DateTime(2012, 1, 18, 17, 22, 35, 
+                        DateTimeKind.Utc),
+        RetireDate = new DateTime(2015, 12, 21, 11, 59, 59, 
+                        DateTimeKind.Utc),
+        ModifyDate = new DateTime(2013, 7, 22, 9, 43, 12, 
+                        DateTimeKind.Utc)
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prodObj,
+            new JavaScriptDateTimeConverter());
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-15 - JavaScript Date Objects
+
+{
+  "Name": "Shirt",
+  "Sizes": [
+    "Small"
+  ],
+  "Stock": 5,
+  "CreateDate": newDate(1326936155000),
+  "ModifyDate": newDate(1374511392000),
+  "RetireDate": newDate(1450727999000)
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-16
+
+public void Go()
+{
+    var prodObj = new Product()
+    {
+        Name = "Shirt",
+        Stock = 5,
+        Sizes = new List<string>() { "Small" },
+        CreateDate = new DateTime(2012, 1, 18, 17, 22, 35, 
+                        DateTimeKind.Utc),
+        RetireDate = new DateTime(2015, 12, 21, 11, 59, 59, 
+                        DateTimeKind.Utc),
+        ModifyDate = new DateTime(2013, 7, 22, 9, 43, 12, 
+                        DateTimeKind.Utc)
+    };
+
+    var jsonStr = JsonConvert.SerializeObject(prodObj,
+            new IsoDateTimeConverter());
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-17
+
+public enum Status
+{
+    Pre_Order,
+    Out_Of_Stock,
+    In_Stock
+};
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    public Status ProdStatus { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-18
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5,
+            Sizes = new List<string>() { "Small" },
+            ProdStatus = Status.In_Stock
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-19
+
+{
+  "Name": "Shirt",
+  "Sizes": [
+    "Small"
+  ],
+  "Stock": 5,
+  "ProdStatus": 2
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-20
+
+class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5,
+            Sizes = new List<string>() { "Small" },
+            ProdStatus = Status.In_Stock
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prodObj,
+        		new StringEnumConverter());
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-21
+
+{
+  "Name": "Shirt",
+  "Sizes": [
+    "Small"
+  ],
+  "Stock": 5,
+  "ProdStatus": "In_Stock"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-22
+
+public void Go()
+{
+    var ds = GetDataSet();
+
+    //uses DataSetConverter internally
+    var dsObj = JsonConvert.SerializeObject(ds);
+}
+
+public DataSet GetDataSet()
+{
+    var table1 = new DataTable("products");
+    table1.Columns.Add("id");
+    table1.Columns.Add("name");
+    table1.Rows.Add(1, "Shirt");
+    table1.Rows.Add(2, "Pants");
+
+    var table2 = new DataTable("sizes");
+    table2.Columns.Add("id");
+    table2.Columns.Add("productId");
+    table2.Columns.Add("sizeName");
+    table2.Rows.Add(1, 1, "Large");
+    table2.Rows.Add(2, 1, "Small");
+    table2.Rows.Add(3, 2, "33");
+
+    // Create a DataSet and put both tables in it.
+    var ds = new DataSet();
+    ds.Tables.Add(table1);
+    ds.Tables.Add(table2);
+    return ds;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-23
+
+{
+  "products": [
+    {
+      "id": "1",
+      "name": "Shirt"
+    },
+    {
+      "id": "2",
+      "name": "Pants"
+    }
+  ],
+  "sizes": [
+    {
+      "id": "1",
+      "productId": "1",
+      "sizeName": "Large"
+    },
+    {
+      "id": "2",
+      "productId": "1",
+      "sizeName": "Small"
+    },
+    {
+      "id": "3",
+      "productId": "2",
+      "sizeName": "33"
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 5-24
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public Status ProdStatus { get; set; }
+}
