@@ -1,1 +1,223 @@
-Ch10.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 10
+
+
+
+
+
+
+
+
+
+Figure 10-1
+
+<?xml version="1.0" encoding="utf-8"?>
+<packages>
+  <package id="Newtonsoft.Json" version="10.0.3"
+              targetFramework="net452" />
+  <package id="Newtonsoft.Json.Bson" version="1.0.1"
+              targetFramework="net452" />
+</packages>
+
+
+
+
+
+
+
+
+
+
+Figure 10-2
+
+public void Go()
+{
+    var jsonStr = @"{""hello"":""world""}";
+    var helloObject = JsonConvert.DeserializeObject(jsonStr);
+
+    using (var bsonStream = new MemoryStream())
+    {
+        using (var bsonWriter = new BsonDataWriter(bsonStream))
+        {
+            var jsonSerializer = new JsonSerializer();
+            jsonSerializer.Serialize(bsonWriter, helloObject);
+            using (var file = new FileStream(@"C:\helloworld.bson",
+                 FileMode.Create, FileAccess.Write))
+            {
+                bsonStream.WriteTo(file);
+            }
+        }
+
+        foreach (byte b in bsonStream.ToArray())
+        {
+            Console.WriteLine("x" + b.ToString("X2") + 
+                " -- " + Encoding.ASCII.GetString(new byte[] { b }));
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 10-3
+
+00000000   16 00 00 00 02 68 65 6C   6C 6F 00 06 00 00 00 77  ...hello.....w
+00000010   6F 72 6C 64 00 00                    orld..
+
+
+
+
+
+
+
+
+
+
+Figure 10-4
+
+x01 = Floating point
+x02 = UTF-8 string
+x03 = Embedded document
+x04 = Array
+x05 = Binary data
+x06 = Deprecated
+x07 = (byte*12) ObjectId
+x08 = Boolean "false"
+x08 = Boolean "true"
+x09 = int64 UTC milliseconds in Unix epoch
+x0A = Null value
+x0B = Regular expression
+x0C = Deprecated
+x0D = JavaScript Code
+x0E = Symbol
+x0F = JavaScript code w/ scope
+x10 = 32-bit Integer
+x11 = Timestamp.
+x12 = 64-bit integer
+xFF = Min key
+x7F = Max key
+
+
+
+
+
+
+
+
+
+
+Figure 10-5
+
+x16 -- ?
+x00 --
+x00 --
+x00 --
+x02 -- ?
+x68 -- h
+x65 -- e
+x6C -- l
+x6C -- l
+x6F -- o
+x00 --
+x06 -- ?
+x00 --
+x00 --
+x00 --
+x77 -- w
+x6F -- o
+x72 -- r
+x6C -- l
+x64 -- d
+x00 --
+x00 --
+
+
+
+
+
+
+
+
+
+
+Figure 10-6
+public void Go()
+{
+    var bson64Str = GetProductBsonBase64();
+    byte[] bsonData = Convert.FromBase64String(bson64Str);
+
+    //deserialize back to .NET object
+    var product = new Product();
+    using (var bsonStream = new MemoryStream(bsonData))
+    {
+        using (var bsonReader = new BsonDataReader(bsonStream))
+        {
+            var jsonSerializer = new JsonSerializer();
+            product =
+                    jsonSerializer.Deserialize<Product>(bsonReader);
+        }
+    }
+}
+
+public string GetProductBsonBase64()
+{
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+        ""Stock"": ""5"",
+        ""Sizes"": [
+            ""Large"",
+            ""Medium""
+        ]
+    }";
+    var jsonObj = JsonConvert.DeserializeObject(jsonStr);
+
+    using (var bsonStream = new MemoryStream())
+    {
+        using (var bsonWriter = new BsonDataWriter(bsonStream))
+        {
+            var jsonSerializer = new JsonSerializer();
+            jsonSerializer.Serialize(bsonWriter, jsonObj);
+        }
+        return Convert.ToBase64String(bsonStream.ToArray());
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 10-7
+
+base64 string
+SQAAAAJOYW1lAAYAAABTaGlydAACU3RvY2sAAgAAADUABFNpemVzACAAAAACMAAGAAAA
+TGFyZ2UAAjEABwAAAE1lZGl1bQAAAA==
+
+
+
+
+
+
+
+
+
+
+Figure 10-8
+
+product:
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
