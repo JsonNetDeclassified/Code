@@ -1,1 +1,1095 @@
-Ch4.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 4
+
+
+
+
+
+
+
+
+
+Figure 4-1
+
+[Serializable]
+public String Name { get; set; }
+
+[Serializable()]
+public String Name { get; set; }
+
+[SerializableAttribute]
+public String Name { get; set; }
+
+[SerializableAttribute()]
+public String Name { get; set; }
+
+
+
+
+
+
+
+
+
+
+Figure 4-2
+
+public class Product
+{
+    [JsonProperty(Required=Required.Always)]
+    public String Name { get; set; }
+    
+    [JsonProperty(PropertyName="Name")]
+    public String ProductName { get; set; }
+
+
+
+
+
+
+
+
+
+
+Figure 4-3
+
+public class Product
+{
+    [JsonProperty(Required=Required.Always, PropertyName="Name")]
+public String ProductName { get; set; }
+
+
+
+
+
+
+
+
+
+
+Figure 4-4
+
+public class Product
+{
+    [JsonProperty(PropertyName = "ProductName")]
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Small" }
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prodObj);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-5
+
+public class Product
+{
+    [JsonProperty(Required = Required.Always)]
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodStr = "{\"Sizes\":[\"Small\"]}";
+
+        var prodOb = 
+                    JsonConvert.DeserializeObject<Product>(prodStr);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-6
+
+public void Go()
+{
+    var prodStr = "{\"Name\":null,\"Sizes\":[\"Small\"]}";
+
+    var prodOb = JsonConvert.DeserializeObject<Product>(prodStr);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-7
+
+public class Product
+{
+    [JsonProperty(Required = Required.AllowNull)]
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-8
+
+public class Product
+{
+    [JsonProperty(DefaultValueHandling =
+                                       DefaultValueHandling.Ignore)]
+    public String Name { get; set; }
+
+
+
+
+
+
+
+
+
+
+Figure 4-9
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    public bool inStock { get; set; }
+
+    public Product()
+    {
+        //this code will not work
+        if (this.Stock > 0)
+            inStock = true;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-10
+
+public void Go()
+{
+    //sample source JSON
+    var jsonStr = @"{
+        ""Name"": ""Shirt"",
+        ""Sizes"": [""Large"", ""X-Large""],
+        ""Stock"": 5
+    }";
+
+    var prodObj = JsonConvert.DeserializeObject<Product>(jsonStr);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-11
+
+prodObj:
+    inStock     = false
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
+
+
+
+
+
+
+
+
+
+
+Figure 4-12
+
+public class Product
+{
+    public String Name { get; set; }
+    public List<String> Sizes { get; set; }
+    public int Stock { get; set; }
+    public bool inStock { get; set; }
+
+    public Product()
+    {
+    }
+
+    [JsonConstructor]
+    public Product(int stock)
+    {
+        this.Stock = stock;
+        if (stock > 0)
+            this.inStock = true;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-13
+
+prodObj:
+    inStock     = true
+    Name        = "Shirt"
+    Sizes       = Count = 2
+    Stock       = 5
+
+
+
+
+
+
+
+
+
+
+Figure 4-14
+
+[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+public class Product
+{
+    private int Id { get; set; }
+    [JsonProperty]
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+
+    public Product()
+    {
+        this.Id = 123;
+    }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var product = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Large", "Medium" },
+            Stock = 5
+        };
+        var jsProd = JsonConvert.SerializeObject(product, 
+                        Formatting.Indented);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-15
+
+{
+  "Name": "Shirt"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-16
+
+[JsonObject(MemberSerialization = MemberSerialization.OptIn)]
+public class Product
+{
+    [JsonProperty]
+    private int Id { get; set; }
+    [JsonProperty]
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+
+    public Product()
+    {
+        this.Id = 123;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-17
+
+{
+  "Id": 123,
+  "Name": "Shirt"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-18
+
+[JsonObject(MemberSerialization = MemberSerialization.OptOut)]
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    [JsonIgnore]
+    public List<string> Sizes { get; set; }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var product = new Product()
+        {
+            Name = "Shirt",
+            Sizes = new List<string>() { "Large", "Medium" },
+            Stock = 5
+        };
+        var jsProd = JsonConvert.SerializeObject(product, 
+                          Formatting.Indented);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-19
+
+{
+  "Name": "Shirt",
+  "Stock": 5
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-20
+
+public class Product
+{
+    private string _name;
+    private int _stock;
+    public string key;
+
+    public string Name
+    {
+        get
+        {
+            return _name;
+        }
+        set
+        {
+            _name = value;
+        }
+    }
+
+    public int Stock
+    {
+        get
+        {
+            return _stock;
+        }
+        set
+        {
+            _stock = value;
+        }
+    }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var product = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5
+        };
+        var jsProd = JsonConvert.SerializeObject(product, 
+                         Formatting.Indented);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-21
+
+{
+  "key": null,
+  "Name": "Shirt",
+  "Stock": 5
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-22
+
+[JsonObject(MemberSerialization = MemberSerialization.Fields)]
+public class Product
+{
+    private string _name;
+    private int _stock;
+    public string key;
+
+    public string Name
+    {
+        get
+        {
+            return _name;
+        }
+        set
+        {
+            _name = value;
+        }
+    }
+
+    public int Stock
+    {
+        get
+        {
+            return _stock;
+        }
+        set
+        {
+            _stock = value;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-23
+{
+  "_name": "Shirt",
+  "_stock": 5,
+  "key": null
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-24
+
+[JsonObject(MemberSerialization = MemberSerialization.Fields)]
+public class Product
+{
+    private string _name;
+    [JsonIgnore]
+    private int _stock;
+    [JsonIgnore]
+    public string key;
+
+    public string Name
+    {
+        get
+        {
+            return _name;
+        }
+        set
+        {
+            _name = value;
+        }
+    }
+
+    public int Stock
+    {
+        get
+        {
+            return _stock;
+        }
+        set
+        {
+            _stock = value;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-25
+
+{
+  "_name": "Shirt"
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-26
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+public class Products : IEnumerable<Product>
+{
+    public string Category { get; set; }
+    public IList<Product> productsList { get; set; }
+
+    public Products()
+    {
+        productsList = new List<Product>();
+    }
+
+    public IEnumerator<Product> GetEnumerator()
+    {
+        return productsList.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var products = new Products()
+        {
+            Category = "Apparel",
+            productsList =
+            {
+                new Product()
+                {
+                    Name = "Shirt",
+                    Sizes = new List<string>() { "Large", "Medium" },
+                    Stock = 5
+                },
+                new Product()
+                {
+                    Name = "pants",
+                    Sizes = new List<string>() { "33", "34" },
+                    Stock = 9
+                }
+            }
+        };
+        var prodJson = JsonConvert.SerializeObject(products);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-27
+
+[
+  {
+    "Name": "Shirt",
+    "Stock": 5,
+    "Sizes": [
+      "Large",
+      "Medium"
+    ]
+  },
+  {
+    "Name": "pants",
+    "Stock": 9,
+    "Sizes": [
+      "33",
+      "34"
+    ]
+  }
+]
+
+
+
+
+
+
+
+
+
+
+Figure 4-28
+
+[JsonObject]
+public class Products : IEnumerable<Product>
+{
+    public string Category { get; set; }
+    public IList<Product> productsList { get; set; }
+
+    public Products()
+    {
+        productsList = new List<Product>();
+    }
+
+    public IEnumerator<Product> GetEnumerator()
+    {
+        return productsList.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-29
+
+{
+  "Category": "Apparel",
+  "productsList": [
+    {
+      "Name": "Shirt",
+      "Stock": 5,
+      "Sizes": [
+        "Large",
+        "Medium"
+      ]
+    },
+    {
+      "Name": "pants",
+      "Stock": 9,
+      "Sizes": [
+        "33",
+        "34"
+      ]
+    }
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-30
+
+[JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+public class Product
+{
+    public string ProductName { get; set; }
+    public int StockLevel { get; set; }
+    public List<string> SizesList { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-31
+
+public void Go()
+{
+    var product = new Product()
+    {
+        ProductName = "Shirt",
+        SizesList = new List<string>() { "Large", "Medium" },
+        StockLevel = 5
+    };
+    var prodJson = JsonConvert.SerializeObject(product, 
+                     Formatting.Indented);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-32
+
+{
+  "productName": "Shirt",
+  "stockLevel": 5,
+  "sizesList": [
+    "Large",
+    "Medium"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-33
+
+[JsonObject(NamingStrategyType = typeof(SnakeCaseNamingStrategy))]
+public class Product
+{
+    public string ProductName { get; set; }
+    public int StockLevel { get; set; }
+    public List<string> SizesList { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-34
+
+{
+  "product_name": "Shirt",
+  "stock_level": 5,
+  "sizes_list": [
+    "Large",
+    "Medium"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-35
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+
+    [JsonExtensionData]
+    public Dictionary<string, JToken> missingMembers;
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var jsonStr = @"{
+            ""Name"": ""Shirt"",
+            ""Stock"": ""5"",
+            ""Sizes"": [
+                ""Large"",
+                ""Medium""
+            ],
+            ""UPC"": ""123456789"",
+            ""Price"": 19.99
+        }";
+        var prodObj =
+                    JsonConvert.DeserializeObject<Product>(jsonStr);
+        var output = String.Join(" | ", prodObj.missingMembers
+              .Select(d => d.Key + " : " + d.Value).ToArray());
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-36
+
+public void Go()
+{
+    var product = new Product()
+    {
+        Name = "Shirt",
+        Sizes = new List<string>() { "Large", "Medium" },
+        Stock = 5,
+        missingMembers = new Dictionary<string, JToken>()
+        {
+            { "UPC", JToken.Parse("123456789").ToString()},
+            { "Price", JToken.Parse("19.99")}
+        }
+    };
+    var prodJson = JsonConvert.SerializeObject(product, 
+                         Formatting.Indented);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-37
+
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Large",
+    "Medium"
+  ],
+  "UPC": "123456789",
+  "Price": 19.99
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-38
+
+public enum Status
+{
+    Pre_Order,
+    Out_Of_Stock,
+    In_Stock
+};
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+    public Status ProdStatus { get; set; }
+
+}
+
+public class Class1
+{
+    public void Go()
+    {
+        var prodObj = new Product()
+        {
+            Name = "Shirt",
+            Stock = 5,
+            Sizes = new List<string>() { "Small" },
+            ProdStatus = Status.In_Stock
+        };
+
+        var jsonStr = JsonConvert.SerializeObject(prodObj, 
+                           Formatting.Indented);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-39
+
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Small"
+  ],
+  "ProdStatus": 2
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-40
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+    [JsonConverter(typeof(StringEnumConverter))]
+    public Status ProdStatus { get; set; }
+
+}
+
+
+
+
+
+
+
+
+
+
+Figure 4-41
+
+{
+  "Name": "Shirt",
+  "Stock": 5,
+  "Sizes": [
+    "Small"
+  ],
+  "ProdStatus": "In_Stock"
+}
