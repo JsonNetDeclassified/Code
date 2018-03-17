@@ -1,3 +1,18 @@
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 2
+
+
+
+
+
+
+
+
+
+
 Figure 2-1
 
 class Program
