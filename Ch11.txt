@@ -1,1 +1,447 @@
-Ch11.txt
+Json.NET Deserialized
+by Joel Recinos
+A comprehensive look at using Json.NET, book available on Amazon.com
+
+Chapter 11
+
+
+
+
+
+
+
+
+
+Figure 11-1
+
+public void Go()
+{
+    var xml = @"<?xml version='1.0' standalone='no'?>
+    <products>
+        <product pid='1'>
+            <name>Shirt</name>
+            <stock>5</stock>
+            <sizes />
+        </product>
+        <product pid='2'>
+            <name>Pants</name>
+            <stock>6</stock>
+            <sizes />
+        </product>
+    </products>";
+
+    var doc = new XmlDocument();
+    doc.LoadXml(xml);
+
+    var jsonStr = 
+             JsonConvert.SerializeXmlNode(doc, Formatting.Indented);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-2
+
+{
+  "?xml": {
+    "@version": "1.0",
+    "@standalone": "no"
+  },
+  "products": {
+    "product": [
+      {
+        "@pid": "1",
+        "name": "Shirt",
+        "stock": "5",
+        "sizes": null
+      },
+      {
+        "@pid": "2",
+        "name": "Pants",
+        "stock": "6",
+        "sizes": null
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-3
+
+var xml = @"<?xml version='1.0' standalone='no' ?>
+<products xmlns:json='http://james.newtonking.com/projects/json'>
+    <product pid='1'>
+        <name>Shirt</name>
+        <stock>5</stock>
+        <sizes>Large</sizes>
+        <sizes>Medium</sizes>
+    </product>
+    <product pid='2'>
+        <name>Pants</name>
+        <stock>6</stock>
+        <sizes>33</sizes>
+    </product>
+</products>";
+
+
+
+
+
+
+
+
+
+
+Figure 11-4
+
+{
+  "?xml": {
+    "@version": "1.0",
+    "@standalone": "no"
+  },
+  "products": {
+    "product": [
+      {
+        "@pid": "1",
+        "name": "Shirt",
+        "stock": "5",
+        "sizes": [
+          "Large",
+          "Medium"
+        ]
+      },
+      {
+        "@pid": "2",
+        "name": "Pants",
+        "stock": "6",
+        "sizes": "33"
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-5
+
+var xml = @"<?xml version='1.0' standalone='no' ?>
+<products xmlns:json='http://james.newtonking.com/projects/json'>
+    <product pid='1'>
+        <name>Shirt</name>
+        <stock>5</stock>
+        <sizes>Large</sizes>
+        <sizes>Medium</sizes>
+    </product>
+    <product pid='2'>
+        <name>Pants</name>
+        <stock>6</stock>
+        <sizes json:Array='true'>33</sizes>
+    </product>
+</products>";
+
+
+
+
+
+
+
+
+
+
+Figure 11-6
+{
+  "?xml": {
+    "@version": "1.0",
+    "@standalone": "no"
+  },
+  "products": {
+    "product": [
+      {
+        "@pid": "1",
+        "name": "Shirt",
+        "stock": "5",
+        "sizes": [
+          "Large",
+          "Medium"
+        ]
+      },
+      {
+        "@pid": "2",
+        "name": "Pants",
+        "stock": "6",
+        "sizes": [
+          "33"
+        ]
+      }
+    ]
+  }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-7
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""?xml"": {
+            ""@version"": ""1.0"",
+            ""@standalone"": ""no""
+        },
+        ""products"": {
+            ""product"": [
+                {
+                    ""@pid"": ""1"",
+                    ""name"": ""Shirt"",
+                    ""stock"": ""5"",
+                    ""sizes"": [
+                        ""Large"",
+                        ""Medium""
+                    ]
+                },
+                {
+                    ""@pid"": ""2"",
+                    ""name"": ""Pants"",
+                    ""stock"": ""6"",
+                ""sizes"": [
+                        ""33""
+                    ]
+                }
+            ]
+        }
+    }";
+
+    
+    XmlDocument doc = JsonConvert.DeserializeXmlNode(jsonStr);
+    var node = doc.SelectSingleNode("/products/product/name");
+    var productName = node.InnerText;
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-8
+
+<?xml version="1.0" standalone=\no"?>
+<products>
+  <product pid="1\>"
+    <name>Shirt</name>
+    <stock>5</stock>
+    <sizes>Large</sizes>
+    <sizes>Medium</sizes>
+  </product>
+  <product pid="2">
+    <name>Pants</name>
+    <stock>6</stock>
+    <sizes>33</sizes>
+  </product>
+</products>
+
+
+
+
+
+
+
+
+
+
+Figure 11-9
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""?xml"": {
+            ""@version"": ""1.0"",
+            ""@standalone"": ""no""
+        },
+        ""products"": {
+            ""product"": [
+                {
+                    ""@pid"": ""1"",
+                    ""name"": ""Shirt"",
+                    ""stock"": ""5"",
+                    ""sizes"": [
+                        ""Large"",
+                        ""Medium""
+                    ]
+                },
+                {
+                    ""@pid"": ""2"",
+                    ""name"": ""Pants"",
+                    ""stock"": ""6"",
+                    ""sizes"": [
+                        ""33""
+                    ]
+                }
+            ]
+        }
+    }";
+
+    //deserialize back to XML XDocument
+    XDocument xdoc = JsonConvert.DeserializeXNode(jsonStr);
+    
+    var products = from item in xdoc.Descendants("product")
+            select new Product
+            {
+                Id = (int)item.Attribute("pid"),
+                Name = (string)item.Element("name"),
+                Sizes = item.Elements("sizes")
+                       .Select(p => p.Value).ToList(),
+                Stock = (int)item.Element("stock")
+            };
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-10
+
+public class Product
+{
+    public string Name { get; set; }
+    public int Id { get; set; }
+    public int Stock { get; set; }
+    public List<string> Sizes { get; set; }
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-11
+
+<products>
+  <product pid="1">
+    <name>Shirt</name>
+    <stock>5</stock>
+    <sizes>Large</sizes>
+    <sizes>Medium</sizes>
+  </product>
+  <product pid="2">
+    <name>Pants</name>
+    <stock>6</stock>
+    <sizes>33</sizes>
+  </product>
+</products>
+
+
+
+
+
+
+
+
+
+
+Figure 11-12
+
+public void Go()
+{
+    var jsonStr = @"{
+            ""?xml"": {
+            ""@version"": ""1.0"",
+            ""@standalone"": ""no""
+        },
+        ""products"": {
+            ""product"": [
+                {
+                    ""@pid"": ""1"",
+                    ""name"": ""Shirt"",
+                    ""stock"": ""5"",
+                    ""sizes"": [
+                        ""Large"",
+                        ""Medium""
+                    ]
+                },
+                {
+                    ""@pid"": ""2"",
+                    ""name"": ""Pants"",
+                    ""stock"": ""6"",
+                    ""sizes"": [
+                        ""33""
+                    ]
+                }
+            ]
+        }
+    }";
+
+    //deserialize back to XML XDocument
+    var xdoc = JsonConvert.DeserializeXNode(jsonStr, "ProductsList",
+                    true);
+}
+
+
+
+
+
+
+
+
+
+
+Figure 11-13
+
+<ProductsList>
+  <products>
+    <product pid="1">
+      <name>Shirt</name>
+      <stock>5</stock>
+      <sizes>Large</sizes>
+      <sizes>Medium</sizes>
+    </product>
+    <product pid="2">
+      <name>Pants</name>
+      <stock>6</stock>
+      <sizes json:Array="true"
+             xmlns:json="http://james.newtonking.com/projects/json">
+          33
+      </sizes>
+    </product>
+  </products>
+</ProductsList>
