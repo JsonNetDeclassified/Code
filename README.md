@@ -7,4 +7,4 @@ Json.NET Declassified is a must-have book if your .NET applications communicate 
 
 Json.NET Declassified, written by a poor, country, computer programmer from Long Beach, California, is the culmination of many years spent developing .NET e-commerce applications using Json.NET.
 
-Available soon on Amazon.com
+Available on <a href="https://amzn.to/2qlvhRp" target="_blank">Amazon.com</a>
